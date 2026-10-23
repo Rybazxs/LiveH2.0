@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\LiveH.Core\LiveH.Core.csproj" />
+    <ProjectReference Include="..\..\src\LiveH.Modules.Today\LiveH.Modules.Today.csproj" />
+  </ItemGroup>
+</Project>

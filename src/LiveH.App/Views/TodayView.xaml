@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="LiveH.App.Views.TodayView"
+             BackgroundColor="{StaticResource OsBlack}">
+    <ScrollView>
+        <VerticalStackLayout Padding="24,24,24,38" Spacing="23">
+            <VerticalStackLayout Spacing="13">
+                <Label Text="DZIŚ" FontSize="29" FontAttributes="Bold"
+                       TextColor="{StaticResource OsCyan}" />
+                <Label x:Name="DateLabel" FontSize="16"
+                       TextColor="{StaticResource OsMuted}" />
+            </VerticalStackLayout>
+
+            <Border BackgroundColor="{StaticResource OsPanel}" StrokeThickness="1"
+                    Stroke="{StaticResource OsBorder}" Padding="18" StrokeShape="RoundRectangle 4">
+                <VerticalStackLayout Spacing="13">
+                    <Grid ColumnDefinitions="4,*" ColumnSpacing="12">
+                        <BoxView Color="{StaticResource OsCyan}" />
+                        <VerticalStackLayout Grid.Column="1" Spacing="7">
+                            <Label Text="BIO OS // POWIADOMIENIA" FontSize="13"
+                                   FontAttributes="Bold" TextColor="{StaticResource OsCyan}" />
+                            <Label x:Name="BioNoticeLabel" Text="Brak nowych powiadomień."
+                                   FontSize="14" LineBreakMode="WordWrap" TextColor="{StaticResource OsText}" />
+                            <Label Text="BioOS nie jest jeszcze podłączony."
+                                   FontSize="12" TextColor="{StaticResource OsMuted}" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <Border BackgroundColor="{StaticResource OsPanel}" StrokeThickness="1"
+                    Stroke="{StaticResource OsBorder}" Padding="18" StrokeShape="RoundRectangle 4">
+                <VerticalStackLayout Spacing="15">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Text="TWÓJ DZIEŃ" FontSize="15" FontAttributes="Bold"
+                               TextColor="{StaticResource OsCyan}" />
+                        <Label x:Name="DayProgressLabel" Grid.Column="1" Text="0/0"
+                               FontSize="15" FontAttributes="Bold" TextColor="{StaticResource OsText}" />
+                    </Grid>
+                    <Label x:Name="MissionStatusLabel" Text="Brak misji na dzisiaj."
+                           FontSize="16" LineBreakMode="WordWrap"
+                           TextColor="{StaticResource OsText}" />
+                    <BoxView HeightRequest="4" Color="{StaticResource OsBorder}" />
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                        <Border BackgroundColor="{StaticResource OsPanelAlt}" Padding="14" StrokeThickness="0">
+                            <VerticalStackLayout Spacing="7">
+                                <Label x:Name="RemainingLabel" Text="0" FontSize="28"
+                                       FontAttributes="Bold" TextColor="{StaticResource OsGreen}" />
+                                <Label Text="POZOSTAŁO MISJI" FontSize="10" CharacterSpacing="0.4"
+                                       TextColor="{StaticResource OsMuted}" />
+                            </VerticalStackLayout>
+                        </Border>
+                        <Border Grid.Column="1" BackgroundColor="{StaticResource OsPanelAlt}"
+                                Padding="14" StrokeThickness="0">
+                            <VerticalStackLayout Spacing="7">
+                                <Label x:Name="OverdueLabel" Text="0" FontSize="28"
+                                       FontAttributes="Bold" TextColor="{StaticResource OsRose}" />
+                                <Label Text="ZALEGŁE" FontSize="10" CharacterSpacing="0.4"
+                                       TextColor="{StaticResource OsMuted}" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <Label Text="LiveH OS / SYSTEM GOTOWY DO ROZBUDOWY"
+                   FontSize="10" TextColor="{StaticResource OsMuted}"
+                   HorizontalOptions="Center" HorizontalTextAlignment="Center" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentView>

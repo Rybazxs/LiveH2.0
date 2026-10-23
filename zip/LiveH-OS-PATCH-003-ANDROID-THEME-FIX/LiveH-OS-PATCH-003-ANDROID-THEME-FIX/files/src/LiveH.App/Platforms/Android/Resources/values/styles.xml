@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<resources>
+    <!-- LiveH OS: do not override the framework-owned Maui.MainTheme here. -->
+    <!-- The built-in Maui.SplashTheme already inherits Maui.MainTheme.NoActionBar. -->
+    <!-- The black screen and system bar appearance are controlled by the MAUI page -->
+    <!-- and the LiveH.App/Platforms/Android/MainActivity.cs configuration. -->
+</resources>
