@@ -45,32 +45,36 @@
             </Border>
         </Grid>
 
-        <Grid Grid.Row="2" Padding="6,8,6,8" ColumnDefinitions="*,*,*,*"
-              BackgroundColor="{StaticResource OsPanel}" ColumnSpacing="4">
+        <!-- System navigation: compact layout with thin steel-blue frame. -->
+        <Border Grid.Row="2" Stroke="{StaticResource OsBorder}" StrokeThickness="1"
+                BackgroundColor="{StaticResource OsPanel}" StrokeShape="RoundRectangle 0">
+            <Grid Padding="6,4,6,4" ColumnDefinitions="*,*,*,*"
+                  BackgroundColor="{StaticResource OsPanel}" ColumnSpacing="4">
             <Border x:Name="TodayTab" Grid.Column="0" StrokeThickness="0" StrokeShape="RoundRectangle 6"
-                    BackgroundColor="{StaticResource OsPanelAlt}" MinimumHeightRequest="66">
+                    BackgroundColor="{StaticResource OsPanelAlt}" MinimumHeightRequest="48">
                 <Border.GestureRecognizers><TapGestureRecognizer Tapped="OnTabTapped" CommandParameter="today" /></Border.GestureRecognizers>
-                <Label x:Name="TodayTabLabel" Text="DZISIAJ" FontSize="12" FontAttributes="Bold"
+                <Label x:Name="TodayTabLabel" Text="DZISIAJ" FontSize="11" FontAttributes="Bold"
                        TextColor="{StaticResource OsCyan}" HorizontalOptions="Center" VerticalOptions="Center" />
             </Border>
             <Border x:Name="MissionsTab" Grid.Column="1" StrokeThickness="0" StrokeShape="RoundRectangle 6"
-                    BackgroundColor="{StaticResource OsPanel}" MinimumHeightRequest="66">
+                    BackgroundColor="{StaticResource OsPanel}" MinimumHeightRequest="48">
                 <Border.GestureRecognizers><TapGestureRecognizer Tapped="OnTabTapped" CommandParameter="missions" /></Border.GestureRecognizers>
-                <Label x:Name="MissionsTabLabel" Text="MISJE" FontSize="12" FontAttributes="Bold"
+                <Label x:Name="MissionsTabLabel" Text="MISJE" FontSize="11" FontAttributes="Bold"
                        TextColor="{StaticResource OsMuted}" HorizontalOptions="Center" VerticalOptions="Center" />
             </Border>
             <Border x:Name="TrackTab" Grid.Column="2" StrokeThickness="0" StrokeShape="RoundRectangle 6"
-                    BackgroundColor="{StaticResource OsPanel}" MinimumHeightRequest="66">
+                    BackgroundColor="{StaticResource OsPanel}" MinimumHeightRequest="48">
                 <Border.GestureRecognizers><TapGestureRecognizer Tapped="OnTabTapped" CommandParameter="track" /></Border.GestureRecognizers>
-                <Label x:Name="TrackTabLabel" Text="TRACK" FontSize="12" FontAttributes="Bold"
+                <Label x:Name="TrackTabLabel" Text="TRACK" FontSize="11" FontAttributes="Bold"
                        TextColor="{StaticResource OsMuted}" HorizontalOptions="Center" VerticalOptions="Center" />
             </Border>
             <Border x:Name="MoreTab" Grid.Column="3" StrokeThickness="0" StrokeShape="RoundRectangle 6"
-                    BackgroundColor="{StaticResource OsPanel}" MinimumHeightRequest="66">
+                    BackgroundColor="{StaticResource OsPanel}" MinimumHeightRequest="48">
                 <Border.GestureRecognizers><TapGestureRecognizer Tapped="OnTabTapped" CommandParameter="more" /></Border.GestureRecognizers>
-                <Label x:Name="MoreTabLabel" Text="WIĘCEJ" FontSize="12" FontAttributes="Bold"
+                <Label x:Name="MoreTabLabel" Text="WIĘCEJ" FontSize="11" FontAttributes="Bold"
                        TextColor="{StaticResource OsMuted}" HorizontalOptions="Center" VerticalOptions="Center" />
             </Border>
-        </Grid>
+            </Grid>
+        </Border>
     </Grid>
 </ContentPage>
