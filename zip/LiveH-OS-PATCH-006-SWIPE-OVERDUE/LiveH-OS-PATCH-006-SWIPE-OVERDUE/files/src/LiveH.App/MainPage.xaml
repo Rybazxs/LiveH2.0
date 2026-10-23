@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="LiveH.App.MainPage"
+             BackgroundColor="{StaticResource OsBlack}"
+             SafeAreaEdges="Container"
+             Shell.NavBarIsVisible="False">
+    <Grid RowDefinitions="Auto,*,Auto" BackgroundColor="{StaticResource OsBlack}">
+        <!-- System-owned header (not owned by Today, BioOS, or Missions). -->
+        <Grid Grid.Row="0" RowDefinitions="Auto,1">
+            <Grid Grid.Row="0" Padding="22,11,22,11" ColumnDefinitions="*,Auto">
+                <VerticalStackLayout Spacing="2">
+                    <Label Text="LiveH OS" FontSize="19" FontAttributes="Bold"
+                           TextColor="{StaticResource OsCyan}" />
+                    <Label Text="LOCAL SYSTEM / ONLINE NOT REQUIRED" FontSize="9"
+                           CharacterSpacing="1" TextColor="{StaticResource OsMuted}" />
+                </VerticalStackLayout>
+                <Label Grid.Column="1" Text="Version 0.0.1" FontSize="11"
+                       VerticalOptions="Center" TextColor="{StaticResource OsMuted}" />
+            </Grid>
+            <BoxView Grid.Row="1" Color="{StaticResource OsBorder}" Margin="22,0,22,0" />
+        </Grid>
+
+        <!-- Swipe is intentionally restricted to the three primary tabs. -->
+        <Grid Grid.Row="1" BackgroundColor="{StaticResource OsBlack}">
+            <ContentView x:Name="ModuleHost" BackgroundColor="{StaticResource OsBlack}" />
+
+            <!-- This is a small menu overlay, not a fourth swipe page. -->
+            <Border x:Name="MorePanel" IsVisible="False" VerticalOptions="End"
+                    Margin="14,10,14,12" Padding="14" StrokeThickness="1"
+                    BackgroundColor="{StaticResource OsPanel}"
+                    Stroke="{StaticResource OsBorder}" StrokeShape="RoundRectangle 8">
+                <VerticalStackLayout Spacing="7">
+                    <Label Text="WIĘCEJ / MODUŁY" TextColor="{StaticResource OsCyan}"
+                           FontSize="12" FontAttributes="Bold" Margin="6,4,0,8" />
+                    <Button Text="Campus LightOS" CommandParameter="campus"
+                            Clicked="OnMoreDestinationClicked" Style="{StaticResource MoreMenuButton}" />
+                    <Button Text="BioOS" CommandParameter="bio"
+                            Clicked="OnMoreDestinationClicked" Style="{StaticResource MoreMenuButton}" />
+                    <Button Text="Analityka" CommandParameter="analytics"
+                            Clicked="OnMoreDestinationClicked" Style="{StaticResource MoreMenuButton}" />
+                    <Button Text="Ustawienia" CommandParameter="settings"
+                            Clicked="OnMoreDestinationClicked" Style="{StaticResource MoreMenuButton}" />
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+
+        <!-- System navigation: compact layout with thin steel-blue frame. -->
+        <Border Grid.Row="2" Stroke="{StaticResource OsBorder}" StrokeThickness="1"
+                BackgroundColor="{StaticResource OsPanel}" StrokeShape="RoundRectangle 0">
+            <Grid Padding="6,4,6,4" ColumnDefinitions="*,*,*,*"
+                  BackgroundColor="{StaticResource OsPanel}" ColumnSpacing="4">
+            <Border x:Name="TodayTab" Grid.Column="0" StrokeThickness="0" StrokeShape="RoundRectangle 6"
+                    BackgroundColor="{StaticResource OsPanelAlt}" MinimumHeightRequest="48">
+                <Border.GestureRecognizers><TapGestureRecognizer Tapped="OnTabTapped" CommandParameter="today" /></Border.GestureRecognizers>
+                <Label x:Name="TodayTabLabel" Text="DZISIAJ" FontSize="11" FontAttributes="Bold"
+                       TextColor="{StaticResource OsCyan}" HorizontalOptions="Center" VerticalOptions="Center" />
+            </Border>
+            <Border x:Name="MissionsTab" Grid.Column="1" StrokeThickness="0" StrokeShape="RoundRectangle 6"
+                    BackgroundColor="{StaticResource OsPanel}" MinimumHeightRequest="48">
+                <Border.GestureRecognizers><TapGestureRecognizer Tapped="OnTabTapped" CommandParameter="missions" /></Border.GestureRecognizers>
+                <Label x:Name="MissionsTabLabel" Text="MISJE" FontSize="11" FontAttributes="Bold"
+                       TextColor="{StaticResource OsMuted}" HorizontalOptions="Center" VerticalOptions="Center" />
+            </Border>
+            <Border x:Name="TrackTab" Grid.Column="2" StrokeThickness="0" StrokeShape="RoundRectangle 6"
+                    BackgroundColor="{StaticResource OsPanel}" MinimumHeightRequest="48">
+                <Border.GestureRecognizers><TapGestureRecognizer Tapped="OnTabTapped" CommandParameter="track" /></Border.GestureRecognizers>
+                <Label x:Name="TrackTabLabel" Text="TRACK" FontSize="11" FontAttributes="Bold"
+                       TextColor="{StaticResource OsMuted}" HorizontalOptions="Center" VerticalOptions="Center" />
+            </Border>
+            <Border x:Name="MoreTab" Grid.Column="3" StrokeThickness="0" StrokeShape="RoundRectangle 6"
+                    BackgroundColor="{StaticResource OsPanel}" MinimumHeightRequest="48">
+                <Border.GestureRecognizers><TapGestureRecognizer Tapped="OnTabTapped" CommandParameter="more" /></Border.GestureRecognizers>
+                <Label x:Name="MoreTabLabel" Text="WIĘCEJ" FontSize="11" FontAttributes="Bold"
+                       TextColor="{StaticResource OsMuted}" HorizontalOptions="Center" VerticalOptions="Center" />
+            </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</ContentPage>

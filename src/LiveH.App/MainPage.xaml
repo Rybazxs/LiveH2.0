@@ -7,22 +7,22 @@
              Shell.NavBarIsVisible="False">
     <Grid RowDefinitions="Auto,*,Auto" BackgroundColor="{StaticResource OsBlack}">
         <!-- System-owned header (not owned by Today, BioOS, or Missions). -->
-        <Grid Grid.Row="0" Padding="22,20,22,18" ColumnDefinitions="*,Auto">
-            <VerticalStackLayout Spacing="2">
-                <Label Text="LiveH OS" FontSize="19" FontAttributes="Bold"
-                       TextColor="{StaticResource OsCyan}" />
-                <Label Text="LOCAL SYSTEM / ONLINE NOT REQUIRED" FontSize="9"
-                       CharacterSpacing="1" TextColor="{StaticResource OsMuted}" />
-            </VerticalStackLayout>
-            <Label Grid.Column="1" Text="Version 0.0.1" FontSize="11"
-                   VerticalOptions="Center" TextColor="{StaticResource OsMuted}" />
+        <Grid Grid.Row="0" RowDefinitions="Auto,1">
+            <Grid Grid.Row="0" Padding="22,11,22,11" ColumnDefinitions="*,Auto">
+                <VerticalStackLayout Spacing="2">
+                    <Label Text="LiveH OS" FontSize="19" FontAttributes="Bold"
+                           TextColor="{StaticResource OsCyan}" />
+                    <Label Text="LOCAL SYSTEM / ONLINE NOT REQUIRED" FontSize="9"
+                           CharacterSpacing="1" TextColor="{StaticResource OsMuted}" />
+                </VerticalStackLayout>
+                <Label Grid.Column="1" Text="Version 0.0.1" FontSize="11"
+                       VerticalOptions="Center" TextColor="{StaticResource OsMuted}" />
+            </Grid>
+            <BoxView Grid.Row="1" Color="{StaticResource OsBorder}" Margin="22,0,22,0" />
         </Grid>
 
         <!-- Swipe is intentionally restricted to the three primary tabs. -->
         <Grid Grid.Row="1" BackgroundColor="{StaticResource OsBlack}">
-            <Grid.GestureRecognizers>
-                <SwipeGestureRecognizer Direction="Left,Right" Threshold="65" Swiped="OnSwiped" />
-            </Grid.GestureRecognizers>
             <ContentView x:Name="ModuleHost" BackgroundColor="{StaticResource OsBlack}" />
 
             <!-- This is a small menu overlay, not a fourth swipe page. -->

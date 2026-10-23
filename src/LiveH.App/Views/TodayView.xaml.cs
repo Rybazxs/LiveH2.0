@@ -25,7 +25,7 @@ public partial class TodayView : ContentView
             if (!IsLoaded) return;
             DayProgressLabel.Text = $"{readModel.Missions.Completed}/{readModel.Missions.Total}";
             RemainingLabel.Text = readModel.Missions.Remaining.ToString(Polish);
-            OverdueLabel.Text = readModel.Missions.Overdue.ToString(Polish);
+            UpdateOverdue(readModel.Missions.Overdue);
             MissionStatusLabel.Text = readModel.Missions.Total == 0
                 ? "Brak misji na dzisiaj."
                 : $"Zostało {readModel.Missions.Remaining} misji.";
@@ -35,8 +35,30 @@ public partial class TodayView : ContentView
         }
         catch (Exception)
         {
-            // Keep the read-only dashboard usable if a future module provider fails.
+            // An unreadable source is NOT proof that the user has no overdue tasks.
             BioNoticeLabel.Text = "Nie udało się odczytać podsumowania.";
+            OverdueLabel.Text = "—";
+            OverdueDescription.Text = "Nie udało się odczytać stanu zaległości.";
+            SetOverdueColor(Color.FromArgb("#8799A9"));
         }
+    }
+
+    private void UpdateOverdue(int count)
+    {
+        // Green when zero, warning rose for one or more overdue tasks.
+        OverdueLabel.Text = count.ToString(Polish);
+        OverdueDescription.Text = count == 0
+            ? "Brak zaległych misji."
+            : "Szczegóły zaległości pojawią się po podłączeniu MissionOS.";
+        SetOverdueColor(Color.FromArgb(count == 0 ? "#78D8B0" : "#F7A6B6"));
+    }
+
+    private void SetOverdueColor(Color color)
+    {
+        OverduePanel.Stroke = new SolidColorBrush(color);
+        OverdueAccent.Color = color;
+        OverdueTitle.TextColor = color;
+        OverdueLabel.TextColor = color;
+        OverdueCaption.TextColor = color;
     }
 }

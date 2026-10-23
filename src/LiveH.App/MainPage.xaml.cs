@@ -52,9 +52,31 @@ public partial class MainPage : ContentPage
 
     private void OnSwiped(object? sender, SwipedEventArgs e)
     {
-        if (MorePanel.IsVisible) return;
+        // Never navigate from the More overlay or non-horizontal gestures.
+        if (MorePanel.IsVisible ||
+            (e.Direction != SwipeDirection.Left && e.Direction != SwipeDirection.Right))
+            return;
+
         if (_navigation.TryMoveHorizontal(e.Direction == SwipeDirection.Left))
             RenderCurrentRoute();
+    }
+
+    private void AttachHorizontalNavigation(View moduleView)
+    {
+        // The shell owns navigation; feature views do not import the coordinator.
+        // Attach to the scrolling surface instead of its parent Grid, because
+        // a ScrollView can consume touch input before it reaches that Grid.
+        var surface = moduleView is ContentView { Content: ScrollView scroll }
+            ? (View)scroll
+            : moduleView;
+
+        var gesture = new SwipeGestureRecognizer
+        {
+            Direction = SwipeDirection.Left | SwipeDirection.Right,
+            Threshold = 65
+        };
+        gesture.Swiped += OnSwiped;
+        surface.GestureRecognizers.Add(gesture);
     }
 
     private void NavigateTo(AppRoute route)
@@ -66,7 +88,7 @@ public partial class MainPage : ContentPage
 
     private void RenderCurrentRoute()
     {
-        ModuleHost.Content = _navigation.Current switch
+        View moduleView = _navigation.Current switch
         {
             AppRoute.Today => new TodayView(_todaySource),
             AppRoute.Missions => new PlaceholderView("MISJE", "MissionOS"),
@@ -77,6 +99,8 @@ public partial class MainPage : ContentPage
             AppRoute.Settings => new PlaceholderView("USTAWIENIA", "System settings"),
             _ => new TodayView(_todaySource)
         };
+        AttachHorizontalNavigation(moduleView);
+        ModuleHost.Content = moduleView;
         SetActiveTabColors();
     }
 

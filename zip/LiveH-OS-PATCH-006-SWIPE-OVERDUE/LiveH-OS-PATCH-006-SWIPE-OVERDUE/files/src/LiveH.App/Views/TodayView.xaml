@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="LiveH.App.Views.TodayView"
+             BackgroundColor="{StaticResource OsBlack}">
+    <ScrollView>
+        <VerticalStackLayout Padding="22,11,22,25" Spacing="13">
+            <!-- Today heading sits closer to the system header. -->
+            <VerticalStackLayout Spacing="4">
+                <Label Text="DZIŚ" FontSize="27" FontAttributes="Bold"
+                       TextColor="{StaticResource OsCyan}" />
+                <Label x:Name="DateLabel" FontSize="14"
+                       TextColor="{StaticResource OsMuted}" />
+            </VerticalStackLayout>
+
+            <!-- Independent BioOS summary: straight corners, read-only. -->
+            <Border BackgroundColor="{StaticResource OsPanel}"
+                    Stroke="{StaticResource OsBorder}" StrokeThickness="1"
+                    StrokeShape="Rectangle" Padding="14,12">
+                <Grid ColumnDefinitions="3,*" ColumnSpacing="11">
+                    <BoxView Color="{StaticResource OsCyan}" />
+                    <VerticalStackLayout Grid.Column="1" Spacing="5">
+                        <Label Text="BIO OS // POWIADOMIENIA" FontSize="12"
+                               FontAttributes="Bold" TextColor="{StaticResource OsCyan}" />
+                        <Label x:Name="BioNoticeLabel" Text="Brak nowych powiadomień."
+                               FontSize="13" LineBreakMode="WordWrap"
+                               TextColor="{StaticResource OsText}" />
+                        <Label Text="BioOS nie jest jeszcze podłączony."
+                               FontSize="11" TextColor="{StaticResource OsMuted}" />
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+
+            <!-- Missions summary AND eventual todo list live in one Today panel. -->
+            <Border BackgroundColor="{StaticResource OsPanel}"
+                    Stroke="{StaticResource OsBorder}" StrokeThickness="1"
+                    StrokeShape="Rectangle" Padding="14,13">
+                <VerticalStackLayout Spacing="11">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Text="TWÓJ DZIEŃ" FontSize="14" FontAttributes="Bold"
+                               TextColor="{StaticResource OsCyan}" />
+                        <Label x:Name="DayProgressLabel" Grid.Column="1" Text="0/0"
+                               FontSize="14" FontAttributes="Bold"
+                               TextColor="{StaticResource OsText}" />
+                    </Grid>
+                    <Label x:Name="MissionStatusLabel" Text="Brak misji na dzisiaj."
+                           FontSize="14" LineBreakMode="WordWrap"
+                           TextColor="{StaticResource OsText}" />
+                    <BoxView HeightRequest="3" Color="{StaticResource OsBorder}" />
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="9" VerticalOptions="Center">
+                        <Label x:Name="RemainingLabel" Text="0" FontSize="23"
+                               FontAttributes="Bold" TextColor="{StaticResource OsGreen}" />
+                        <Label Grid.Column="1" Text="POZOSTAŁO MISJI" FontSize="10"
+                               CharacterSpacing="0.4" VerticalOptions="Center"
+                               TextColor="{StaticResource OsMuted}" />
+                    </Grid>
+                    <BoxView HeightRequest="1" Color="{StaticResource OsBorder}" />
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="DO ZROBIENIA" FontSize="12" FontAttributes="Bold"
+                               TextColor="{StaticResource OsText}" />
+                        <Label Text="Lista misji pojawi się po podłączeniu MissionOS."
+                               FontSize="12" LineBreakMode="WordWrap"
+                               TextColor="{StaticResource OsMuted}" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Overdue items are isolated from the normal todo list. -->
+            <Border x:Name="OverduePanel" BackgroundColor="{StaticResource OsPanel}"
+                    Stroke="{StaticResource OsGreen}" StrokeThickness="1"
+                    StrokeShape="Rectangle" Padding="14,12" Margin="0,5,0,0">
+                <Grid ColumnDefinitions="3,*" ColumnSpacing="11">
+                    <BoxView x:Name="OverdueAccent" Color="{StaticResource OsGreen}" />
+                    <VerticalStackLayout Grid.Column="1" Spacing="5">
+                        <HorizontalStackLayout Spacing="7">
+                            <Label x:Name="OverdueTitle" Text="ZALEGŁE //" FontSize="13" FontAttributes="Bold"
+                                   TextColor="{StaticResource OsGreen}" />
+                            <Label x:Name="OverdueLabel" Text="0" FontSize="13"
+                                   FontAttributes="Bold" TextColor="{StaticResource OsGreen}" />
+                            <Label x:Name="OverdueCaption" Text="DO ROZLICZENIA" FontSize="11"
+                                   VerticalOptions="Center" TextColor="{StaticResource OsGreen}" />
+                        </HorizontalStackLayout>
+                        <Label x:Name="OverdueDescription" Text="Brak zaległych misji."
+                               FontSize="12" LineBreakMode="WordWrap"
+                               TextColor="{StaticResource OsMuted}" />
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentView>
