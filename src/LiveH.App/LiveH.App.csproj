@@ -23,5 +23,7 @@
     <ProjectReference Include="..\LiveH.Contracts\LiveH.Contracts.csproj" />
     <ProjectReference Include="..\LiveH.Core\LiveH.Core.csproj" />
     <ProjectReference Include="..\LiveH.Modules.Today\LiveH.Modules.Today.csproj" />
+    <ProjectReference Include="..\LiveH.Modules.Missions\LiveH.Modules.Missions.csproj" />
+    <ProjectReference Include="..\LiveH.Modules.Groups\LiveH.Modules.Groups.csproj" />
   </ItemGroup>
 </Project>

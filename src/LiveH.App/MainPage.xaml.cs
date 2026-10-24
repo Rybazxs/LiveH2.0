@@ -1,5 +1,7 @@
 using LiveH.App.Views;
 using LiveH.Contracts.Navigation;
+using LiveH.Contracts.Missions;
+using LiveH.Contracts.Groups;
 using LiveH.Contracts.Today;
 using LiveH.Core.Navigation;
 
@@ -9,17 +11,22 @@ public partial class MainPage : ContentPage
 {
     private readonly NavigationCoordinator _navigation;
     private readonly ITodayReadModelSource _todaySource;
+    private readonly IMissionRepository _missionRepository;
+    private readonly IGroupRepository _groupRepository;
 
     private readonly Color _activeBackground = Color.FromArgb("#0D2633");
     private readonly Color _inactiveBackground = Color.FromArgb("#081019");
     private readonly Color _activeText = Color.FromArgb("#20D8F2");
     private readonly Color _inactiveText = Color.FromArgb("#8799A9");
 
-    public MainPage(NavigationCoordinator navigation, ITodayReadModelSource todaySource)
+    public MainPage(NavigationCoordinator navigation, ITodayReadModelSource todaySource,
+        IMissionRepository missionRepository, IGroupRepository groupRepository)
     {
         InitializeComponent();
         _navigation = navigation;
         _todaySource = todaySource;
+        _missionRepository = missionRepository;
+        _groupRepository = groupRepository;
         RenderCurrentRoute();
     }
 
@@ -53,7 +60,7 @@ public partial class MainPage : ContentPage
     private void OnSwiped(object? sender, SwipedEventArgs e)
     {
         // Never navigate from the More overlay or non-horizontal gestures.
-        if (MorePanel.IsVisible ||
+        if (ModuleHost.Content is MissionsView { IsEditing: true } || MorePanel.IsVisible ||
             (e.Direction != SwipeDirection.Left && e.Direction != SwipeDirection.Right))
             return;
 
@@ -91,7 +98,7 @@ public partial class MainPage : ContentPage
         View moduleView = _navigation.Current switch
         {
             AppRoute.Today => new TodayView(_todaySource),
-            AppRoute.Missions => new PlaceholderView("MISJE", "MissionOS"),
+            AppRoute.Missions => new MissionsView(_missionRepository, _groupRepository),
             AppRoute.Track => new PlaceholderView("TRACK", "TrackOS"),
             AppRoute.CampusLightOS => new PlaceholderView("CAMPUS LIGHTOS", "Campus LightOS"),
             AppRoute.BioOS => new PlaceholderView("BIO OS", "BioOS"),

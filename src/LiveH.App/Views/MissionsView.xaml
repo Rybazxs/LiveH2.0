@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="LiveH.App.Views.MissionsView"
+             BackgroundColor="{StaticResource OsBlack}">
+    <ScrollView>
+        <VerticalStackLayout Padding="22,11,22,25" Spacing="13">
+            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                <VerticalStackLayout Spacing="3">
+                    <Label Text="MISJE" FontSize="27" FontAttributes="Bold"
+                           TextColor="{StaticResource OsCyan}" />
+                    <Label Text="MISSION OS // LOCAL" FontSize="10" CharacterSpacing="1"
+                           TextColor="{StaticResource OsMuted}" />
+                </VerticalStackLayout>
+                <Button Grid.Column="1" x:Name="GroupsButton" Text="▣ GRUPY"
+                        Clicked="OnToggleGroups" HeightRequest="41" FontSize="11"
+                        BackgroundColor="{StaticResource OsPanelAlt}"
+                        TextColor="{StaticResource OsCyan}" />
+                <Button Grid.Column="2" x:Name="AddButton" Text="+ MISJA"
+                        Clicked="OnToggleForm" HeightRequest="41" FontSize="11"
+                        BackgroundColor="{StaticResource OsPanelAlt}"
+                        TextColor="{StaticResource OsCyan}" />
+            </Grid>
+
+            <!-- Own GroupsOS workspace: presentation joins independent group/mission contracts. -->
+            <ContentView x:Name="GroupsHost" IsVisible="False" />
+
+            <Border x:Name="FormPanel" IsVisible="False" Padding="14,13"
+                    Stroke="{StaticResource OsCyan}" StrokeThickness="1"
+                    StrokeShape="Rectangle" BackgroundColor="{StaticResource OsPanel}">
+                <VerticalStackLayout Spacing="11">
+                    <Label Text="NOWA MISJA" FontSize="13" FontAttributes="Bold"
+                           TextColor="{StaticResource OsCyan}" />
+                    <Entry x:Name="TitleEntry" Placeholder="Nazwa misji (wymagana)"
+                           MaxLength="160" FontSize="14" TextColor="{StaticResource OsText}"
+                           PlaceholderColor="{StaticResource OsMuted}" />
+                    <Editor x:Name="NotesEditor" Placeholder="Opis / notatki (opcjonalnie)"
+                            AutoSize="TextChanges" HeightRequest="70"
+                            MaxLength="4000" FontSize="13" TextColor="{StaticResource OsText}"
+                            PlaceholderColor="{StaticResource OsMuted}" />
+                    <Label Text="KIEDY?" FontSize="11" FontAttributes="Bold"
+                           TextColor="{StaticResource OsMuted}" />
+                    <Picker x:Name="TimingPicker" Title="Wybierz tryb"
+                            SelectedIndexChanged="OnTimingChanged"
+                            TextColor="{StaticResource OsText}" TitleColor="{StaticResource OsMuted}">
+                        <Picker.Items>
+                            <x:String>Na cito / bez terminu</x:String>
+                            <x:String>Do zrobienia w dniu</x:String>
+                            <x:String>Dokładnie od – do</x:String>
+                        </Picker.Items>
+                    </Picker>
+                    <VerticalStackLayout x:Name="DayFields" IsVisible="False" Spacing="4">
+                        <Label Text="DZIEŃ" FontSize="11" TextColor="{StaticResource OsMuted}" />
+                        <DatePicker x:Name="DayPicker" Format="dd.MM.yyyy"
+                                    TextColor="{StaticResource OsText}" />
+                    </VerticalStackLayout>
+                    <VerticalStackLayout x:Name="RangeFields" IsVisible="False" Spacing="8">
+                        <Label Text="OD" FontSize="11" TextColor="{StaticResource OsMuted}" />
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                            <DatePicker x:Name="StartDatePicker" Format="dd.MM.yyyy"
+                                        TextColor="{StaticResource OsText}" />
+                            <TimePicker Grid.Column="1" x:Name="StartTimePicker" Format="HH:mm"
+                                        TextColor="{StaticResource OsText}" />
+                        </Grid>
+                        <Label Text="DO" FontSize="11" TextColor="{StaticResource OsMuted}" />
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                            <DatePicker x:Name="EndDatePicker" Format="dd.MM.yyyy"
+                                        TextColor="{StaticResource OsText}" />
+                            <TimePicker Grid.Column="1" x:Name="EndTimePicker" Format="HH:mm"
+                                        TextColor="{StaticResource OsText}" />
+                        </Grid>
+                    </VerticalStackLayout>
+                    <Label Text="PRIORYTET (OPCJONALNIE)" FontSize="10"
+                           TextColor="{StaticResource OsMuted}" />
+                    <Picker x:Name="PriorityPicker" Title="Wybierz priorytet"
+                            TextColor="{StaticResource OsText}"
+                            TitleColor="{StaticResource OsMuted}">
+                        <Picker.Items>
+                            <x:String>Normalny (domyślny)</x:String>
+                            <x:String>Niski</x:String>
+                            <x:String>Ważny</x:String>
+                            <x:String>Krytyczny</x:String>
+                        </Picker.Items>
+                    </Picker>
+                    <Label Text="SZACOWANY CZAS / MIN (OPCJONALNIE)" FontSize="10"
+                           TextColor="{StaticResource OsMuted}" />
+                    <Entry x:Name="EstimateEntry" Keyboard="Numeric" Placeholder="np. 45"
+                           MaxLength="5" FontSize="13" TextColor="{StaticResource OsText}"
+                           PlaceholderColor="{StaticResource OsMuted}" />
+                    <Label Text="GRUPA (OPCJONALNIE)" FontSize="10"
+                           TextColor="{StaticResource OsMuted}" />
+                    <Picker x:Name="GroupPicker" Title="Wybierz grupę"
+                            TextColor="{StaticResource OsText}"
+                            TitleColor="{StaticResource OsMuted}" />
+                    <Label Text="Grupy i podgrupy utworzysz przez przycisk GRUPY."
+                           FontSize="11" TextColor="{StaticResource OsMuted}" />
+                    <Label x:Name="FormError" IsVisible="False" FontSize="12"
+                           TextColor="{StaticResource OsRose}" />
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <Button Text="ANULUJ" Clicked="OnCancel" FontSize="12"
+                                BackgroundColor="{StaticResource OsPanelAlt}"
+                                TextColor="{StaticResource OsMuted}" />
+                        <Button x:Name="SaveButton" Grid.Column="1" Text="ZAPISZ MISJĘ"
+                                Clicked="OnSave" FontSize="12" FontAttributes="Bold"
+                                BackgroundColor="{StaticResource OsPanelAlt}"
+                                TextColor="{StaticResource OsCyan}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <Border Padding="14,12" Stroke="{StaticResource OsBorder}" StrokeThickness="1"
+                    StrokeShape="Rectangle" BackgroundColor="{StaticResource OsPanel}">
+                <VerticalStackLayout Spacing="9">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Text="TWOJE MISJE" FontSize="14" FontAttributes="Bold"
+                               TextColor="{StaticResource OsCyan}" />
+                        <Label x:Name="CountLabel" Grid.Column="1" Text="0"
+                               FontSize="13" TextColor="{StaticResource OsText}" />
+                    </Grid>
+                    <Label x:Name="LoadError" IsVisible="False" FontSize="12"
+                           TextColor="{StaticResource OsRose}" />
+                    <VerticalStackLayout x:Name="MissionItems" Spacing="8" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Completed is deliberately visually quieter than active missions. -->
+            <Border x:Name="CompletedPanel" IsVisible="False"
+                    Padding="13,11" Stroke="#22313B" StrokeThickness="1"
+                    StrokeShape="Rectangle" BackgroundColor="#080E14">
+                <VerticalStackLayout Spacing="8">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Text="WYKONANE // ARCHIWUM" FontSize="11"
+                               FontAttributes="Bold" TextColor="{StaticResource OsMuted}" />
+                        <Label x:Name="CompletedCountLabel" Grid.Column="1" Text="0"
+                               FontSize="11" TextColor="{StaticResource OsMuted}" />
+                    </Grid>
+                    <VerticalStackLayout x:Name="CompletedItems" Spacing="7" />
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentView>
