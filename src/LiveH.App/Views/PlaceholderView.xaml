@@ -4,16 +4,16 @@
              x:Class="LiveH.App.Views.PlaceholderView"
              BackgroundColor="{StaticResource OsBlack}">
     <ScrollView>
-        <VerticalStackLayout Padding="24,28" Spacing="25">
-            <Label x:Name="PageTitle" FontSize="29" FontAttributes="Bold"
+        <VerticalStackLayout Padding="22,11,22,25" Spacing="13">
+            <Label x:Name="PageTitle" FontSize="27" FontAttributes="Bold"
                    TextColor="{StaticResource OsCyan}" />
-            <Border Padding="20" StrokeThickness="1" Stroke="{StaticResource OsBorder}"
-                    StrokeShape="RoundRectangle 4" BackgroundColor="{StaticResource OsPanel}">
-                <VerticalStackLayout Spacing="14">
-                    <Label x:Name="ModuleLabel" FontSize="18" FontAttributes="Bold"
+            <Border Padding="14,12" StrokeThickness="1" Stroke="{StaticResource OsBorder}"
+                    StrokeShape="Rectangle" BackgroundColor="{StaticResource OsPanel}">
+                <VerticalStackLayout Spacing="9">
+                    <Label x:Name="ModuleLabel" FontSize="14" FontAttributes="Bold"
                            TextColor="{StaticResource OsText}" />
                     <Label Text="Szkielet nawigacji działa. Ten moduł zostanie dodany w osobnej paczce."
-                           FontSize="14" TextColor="{StaticResource OsMuted}" />
+                           FontSize="13" TextColor="{StaticResource OsMuted}" />
                     <Label Text="Brak fikcyjnych danych i przypadkowych zależności."
                            FontSize="12" TextColor="{StaticResource OsCyan}" />
                 </VerticalStackLayout>
