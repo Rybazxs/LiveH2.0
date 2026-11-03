@@ -1,4 +1,5 @@
 using LiveH.Contracts.Groups;
+using LiveH.Contracts.Missions;
 using LiveH.Contracts.Track;
 using Microsoft.Maui.Dispatching;
 
@@ -17,7 +18,8 @@ public sealed class TrackView : ContentView
 {
     private readonly ITrackService _track;
     private readonly IGroupRepository _groups;
-    private readonly Func<string, Guid?, Task<bool>> _quickCreate;
+    private readonly Func<MissionDraft, Task<bool>> _quickCreate;
+    private readonly Func<Guid, Task> _openHistoryMission;
 
     // Permanent visual tree.
     private readonly VerticalStackLayout _body = new() { Spacing = 12 };
@@ -27,6 +29,19 @@ public sealed class TrackView : ContentView
     private readonly Button _startButton;
     private readonly Button _confirmButton;
     private readonly Entry _quickTitle;
+    private readonly Editor _quickNotes;
+    private readonly Entry _quickEstimate;
+    private readonly Picker _quickPriority;
+    private readonly Picker _quickTiming;
+    private readonly DatePicker _quickDay;
+    private readonly DatePicker _quickStartDate;
+    private readonly DatePicker _quickEndDate;
+    private readonly TimePicker _quickStartTime;
+    private readonly TimePicker _quickEndTime;
+    private readonly VerticalStackLayout _quickDayFields;
+    private readonly VerticalStackLayout _quickRangeFields;
+    private readonly Border _createPanel;
+    private readonly Button _createToggle;
     private readonly Picker _quickGroup;
     private readonly Label _errorLabel;
     private readonly Border _statusPanel;
@@ -57,11 +72,12 @@ public sealed class TrackView : ContentView
     private static readonly Color Muted = Color.FromArgb("#8799A9");
     private static readonly Color Rose = Color.FromArgb("#F7A6B6");
 
-    public TrackView(ITrackService track, IGroupRepository groups, Func<string, Guid?, Task<bool>> quickCreate)
+    public TrackView(ITrackService track, IGroupRepository groups, Func<MissionDraft, Task<bool>> quickCreate, Func<Guid, Task> openHistoryMission)
     {
         _track = track;
         _groups = groups;
         _quickCreate = quickCreate;
+        _openHistoryMission = openHistoryMission;
 
         // ---- header ----
         _errorLabel = Lbl("", Rose, 12);
@@ -98,40 +114,94 @@ public sealed class TrackView : ContentView
         _dockHint = Lbl("PAUZA I ZAKOŃCZ SĄ ZAWSZE NA DOLE EKRANU", Muted, 10);
         _dockHint.IsVisible = false;
 
-        // ---- quick create (Entry/Picker are created once and never re-parented) ----
-        _quickTitle = new Entry
-        {
-            Placeholder = "Nazwa nowej misji", MaxLength = 160,
-            TextColor = Text, PlaceholderColor = Muted, FontSize = 14
-        };
+        // ---- full mission generator, collapsed until requested ----
+        _quickTitle = new Entry { Placeholder = "Nazwa misji", MaxLength = 160,
+            TextColor = Text, PlaceholderColor = Muted, FontSize = 14 };
+        _quickNotes = new Editor { Placeholder = "Opis / notatki", MaxLength = 4000,
+            AutoSize = EditorAutoSizeOption.TextChanges, HeightRequest = 65,
+            TextColor = Text, PlaceholderColor = Muted, FontSize = 12 };
         _quickGroup = new Picker { Title = "Grupa (opcjonalnie)", TextColor = Text, TitleColor = Muted };
         _quickGroup.Items.Add("BEZ GRUPY");
         _quickGroup.SelectedIndex = 0;
-        _startButton = Control("+ UTWÓRZ I START", Cyan);
+        _quickPriority = new Picker { Title = "Priorytet", TextColor = Text, TitleColor = Muted };
+        foreach (var label in new[] { "Normalny", "Niski", "Ważny", "Krytyczny" })
+            _quickPriority.Items.Add(label);
+        _quickPriority.SelectedIndex = 0;
+        _quickEstimate = new Entry { Placeholder = "Szacowany czas (min)", Keyboard = Keyboard.Numeric,
+            MaxLength = 5, FontSize = 12, TextColor = Text, PlaceholderColor = Muted };
+        _quickTiming = new Picker { Title = "Termin", TextColor = Text, TitleColor = Muted };
+        foreach (var label in new[] { "Na cito / bez terminu", "Wybrany dzień", "Dokładnie od – do" })
+            _quickTiming.Items.Add(label);
+        _quickTiming.SelectedIndex = 0;
+        _quickDay = new DatePicker { Date = DateTime.Today, Format = "dd.MM.yyyy", TextColor = Text };
+        _quickStartDate = new DatePicker { Date = DateTime.Today, Format = "dd.MM.yyyy", TextColor = Text };
+        _quickEndDate = new DatePicker { Date = DateTime.Today, Format = "dd.MM.yyyy", TextColor = Text };
+        _quickStartTime = new TimePicker { Time = new TimeSpan(9, 0, 0), Format = "HH:mm", TextColor = Text };
+        _quickEndTime = new TimePicker { Time = new TimeSpan(10, 0, 0), Format = "HH:mm", TextColor = Text };
+        _quickDayFields = new VerticalStackLayout { Spacing = 4, IsVisible = false,
+            Children = { Lbl("DZIEŃ", Muted, 11), _quickDay } };
+        _quickRangeFields = new VerticalStackLayout { Spacing = 5, IsVisible = false,
+            Children = { Lbl("OD", Muted, 11), _quickStartDate, _quickStartTime,
+                         Lbl("DO", Muted, 11), _quickEndDate, _quickEndTime } };
+        _quickTiming.SelectedIndexChanged += (_, _) =>
+        {
+            _quickDayFields.IsVisible = _quickTiming.SelectedIndex == 1;
+            _quickRangeFields.IsVisible = _quickTiming.SelectedIndex == 2;
+        };
+        _startButton = Control("+ UTWÓRZ I ROZPOCZNIJ", Cyan);
         _startButton.Clicked += async (_, _) =>
         {
-            _quickTitle.Unfocus(); // close the keyboard before the list refreshes
-            await ExecuteAsync("QUICK START", async () =>
+            _quickTitle.Unfocus();
+            await ExecuteAsync("CREATE AND START", async () =>
             {
-                var title = _quickTitle.Text?.Trim();
-                if (string.IsNullOrWhiteSpace(title))
-                    throw new ArgumentException("Podaj nazwę misji.");
-                if (await _quickCreate(title, SelectedGroupId())) _quickTitle.Text = "";
+                int? estimate = null;
+                if (!string.IsNullOrWhiteSpace(_quickEstimate.Text))
+                {
+                    if (!int.TryParse(_quickEstimate.Text.Trim(), out var parsed) || parsed < 1 || parsed > 10080)
+                        throw new ArgumentException("Szacowany czas musi mieć 1–10080 minut.");
+                    estimate = parsed;
+                }
+                var timing = (MissionTimingMode)Math.Max(0, _quickTiming.SelectedIndex);
+                DateOnly? day = null;
+                DateTime? starts = null;
+                DateTime? ends = null;
+                if (timing == MissionTimingMode.Day)
+                    day = DateOnly.FromDateTime(_quickDay.Date ?? DateTime.Today);
+                if (timing == MissionTimingMode.TimeRange)
+                {
+                    starts = (_quickStartDate.Date ?? DateTime.Today).Date + (_quickStartTime.Time ?? TimeSpan.Zero);
+                    ends = (_quickEndDate.Date ?? DateTime.Today).Date + (_quickEndTime.Time ?? TimeSpan.Zero);
+                }
+                var selectedId = SelectedGroupId();
+                var group = _availableGroups.FirstOrDefault(g => g.Id == selectedId);
+                var draft = new MissionDraft(_quickTitle.Text ?? "", _quickNotes.Text,
+                    timing, day, starts, ends, estimate, null, TimeZoneInfo.Local.Id,
+                    group?.Name, (MissionPriority)Math.Max(0, _quickPriority.SelectedIndex), group?.Id);
+                if (await _quickCreate(draft))
+                {
+                    _quickTitle.Text = "";
+                    _quickNotes.Text = "";
+                    _quickEstimate.Text = "";
+                    _createPanel.IsVisible = false;
+                    _createToggle.Text = "▸ TRACK NEW MISSION";
+                }
             });
         };
-        var createPanel = Panel(new VerticalStackLayout
+        _createToggle = Control("▸ TRACK NEW MISSION", Cyan);
+        _createToggle.HeightRequest = 44;
+        _createPanel = Panel(new VerticalStackLayout
         {
             Spacing = 8,
-            Children =
-            {
-                Lbl("NOWA MISJA + TRACK", Cyan, 13, true),
-                Lbl("Wpisz nazwę. Pozostałe dane uzupełnisz później w Misjach.", Muted, 11),
-                _quickTitle,
-                _quickGroup,
-                _startButton
-            }
+            Children = { Lbl("NOWA MISJA + TRACK", Cyan, 13, true),
+                _quickTitle, _quickNotes, _quickTiming, _quickDayFields, _quickRangeFields,
+                _quickPriority, _quickEstimate, _quickGroup, _startButton }
         });
-
+        _createPanel.IsVisible = false;
+        _createToggle.Clicked += (_, _) =>
+        {
+            _createPanel.IsVisible = !_createPanel.IsVisible;
+            _createToggle.Text = _createPanel.IsVisible ? "▾ TRACK NEW MISSION" : "▸ TRACK NEW MISSION";
+        };
         // ---- history ----
         _historyHeader = Lbl("HISTORIA · ŁĄCZNIE 0 h 00 min", Cyan, 12, true);
         _historyHost = new VerticalStackLayout { Spacing = 12 };
@@ -142,7 +212,8 @@ public sealed class TrackView : ContentView
         _body.Children.Add(_statusPanel);
         _body.Children.Add(_emptyPanel);
         _body.Children.Add(_dockHint);
-        _body.Children.Add(createPanel);
+        _body.Children.Add(_createToggle);
+        _body.Children.Add(_createPanel);
         _body.Children.Add(_historyHeader);
         _body.Children.Add(_historyHost);
 
@@ -290,6 +361,8 @@ public sealed class TrackView : ContentView
     }
 
     // Never throws: a failed refresh shows an error line instead of killing the app.
+    public Task RefreshAfterHistoryActionAsync() => ReloadAsync();
+
     private async Task ReloadAsync()
     {
         if (_busy) return;
@@ -416,7 +489,22 @@ public sealed class TrackView : ContentView
                 (entry.State == TrackSessionState.Stopped
                     ? entry.EndedByInactivity ? "AUTO STOP" : "ZAKOŃCZONA"
                     : entry.State == TrackSessionState.Paused ? "PAUZA" : "TRWA"), Muted, 10));
-            _historyHost.Children.Add(Panel(detail));
+            var historyRow = Panel(detail);
+            var missionId = entry.MissionId;
+            var tap = new TapGestureRecognizer();
+            tap.Tapped += async (_, _) =>
+            {
+                try { await _openHistoryMission(missionId); }
+                catch (Exception ex)
+                {
+                    _errorText = ex.Message;
+                    SafeApply();
+                }
+            };
+            historyRow.GestureRecognizers.Add(tap);
+            SemanticProperties.SetDescription(historyRow,
+                $"{entry.MissionTitle}. OtwÃ³rz misjÄ™: edycja lub Å›ledzenie.");
+            _historyHost.Children.Add(historyRow);
         }
     }
 

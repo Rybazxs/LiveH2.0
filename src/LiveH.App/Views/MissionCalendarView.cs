@@ -54,22 +54,23 @@ public sealed class MissionCalendarView : ContentView
         var modeRow = new Grid { ColumnSpacing = 4 };
         for (var i = 0; i < 4; i++)
         {
-            modeRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+            if (i != 2) modeRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
             var mode = (ViewMode)i;
             var button = new Button
             {
                 Text = mode switch
                 {
-                    ViewMode.All => "WSZYSTKIE", ViewMode.Day => "DZIEŃ",
+                    ViewMode.All => "DZISIAJ", ViewMode.Day => "TYDZIEŃ",
                     ViewMode.Range => "ZAKRES", _ => "MIESIĄC"
                 },
                 FontSize = 10, HeightRequest = 35, MinimumWidthRequest = 0,
                 Padding = new Thickness(2, 0), HorizontalOptions = LayoutOptions.Fill,
                 CornerRadius = 4, BackgroundColor = Panel, TextColor = Muted
             };
+            button.IsVisible = mode != ViewMode.Range;
             button.Clicked += (_, _) => SelectMode(mode);
             _modes[i] = button;
-            Grid.SetColumn(button, i);
+            Grid.SetColumn(button, i == 3 ? 2 : i);
             modeRow.Children.Add(button);
         }
         root.Children.Add(modeRow);
@@ -134,9 +135,11 @@ public sealed class MissionCalendarView : ContentView
 
     public bool Includes(MissionRecord mission) => Mode switch
     {
-        ViewMode.Day or ViewMode.Month => MissionCalendarQuery.OccursOn(mission, SelectedDay),
+        ViewMode.All => MissionCalendarQuery.OccursOn(mission, DateOnly.FromDateTime(DateTime.Today)),
+        ViewMode.Day => MissionCalendarQuery.Overlaps(mission, StartOfWeek(SelectedDay), StartOfWeek(SelectedDay).AddDays(6)),
+        ViewMode.Month => MissionCalendarQuery.OccursOn(mission, SelectedDay),
         ViewMode.Range => MissionCalendarQuery.Overlaps(mission, RangeFrom, RangeTo),
-        _ => true
+        _ => false
     };
 
     public void SetMissions(IReadOnlyList<MissionRecord> missions)
@@ -147,10 +150,15 @@ public sealed class MissionCalendarView : ContentView
 
     public string ActiveFilterCaption => Mode switch
     {
-        ViewMode.Day or ViewMode.Month => SelectedDay.ToString("dd.MM.yyyy", Polish),
+        ViewMode.All => "DZISIAJ · " + DateTime.Today.ToString("dd.MM.yyyy", Polish),
+        ViewMode.Day => $"TYDZIEŃ · {StartOfWeek(SelectedDay):dd.MM}–{StartOfWeek(SelectedDay).AddDays(6):dd.MM.yyyy}",
+        ViewMode.Month => SelectedDay.ToString("dd.MM.yyyy", Polish),
         ViewMode.Range => $"{RangeFrom:dd.MM.yyyy} – {RangeTo:dd.MM.yyyy}",
         _ => "WSZYSTKIE TERMINY"
     };
+
+    private static DateOnly StartOfWeek(DateOnly day) =>
+        day.AddDays(-(((int)day.DayOfWeek + 6) % 7));
 
     private void SelectMode(ViewMode mode)
     {

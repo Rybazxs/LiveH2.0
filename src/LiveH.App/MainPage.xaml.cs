@@ -4,6 +4,8 @@ using LiveH.Contracts.Missions;
 using LiveH.Contracts.Groups;
 using LiveH.Contracts.Track;
 using LiveH.Contracts.Today;
+using Microsoft.Maui.Dispatching;
+using Microsoft.Maui.ApplicationModel;
 using LiveH.Core.Navigation;
 
 namespace LiveH.App;
@@ -26,6 +28,8 @@ public partial class MainPage : ContentPage
     private bool _missionsShownBefore;
     private bool _todayGestureAttached;
     private bool _trackGestureAttached;
+    private IDispatcherTimer? _globalTrackTimer;
+    private bool _headerRefreshBusy;
 
     private readonly Color _activeBackground = Color.FromArgb("#0D2633");
     private readonly Color _inactiveBackground = Color.FromArgb("#081019");
@@ -43,7 +47,56 @@ public partial class MainPage : ContentPage
         _trackService = trackService;
         _cardCommands = new MissionCardCommands(this, _missionRepository,
             _groupRepository, StartTrackingMissionAsync);
+        VersionLabel.Text = "Version " + AppInfo.Current.VersionString;
         RenderCurrentRoute();
+    }
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        if (_globalTrackTimer is null)
+        {
+            _globalTrackTimer = Dispatcher.CreateTimer();
+            _globalTrackTimer.Interval = TimeSpan.FromSeconds(1);
+            _globalTrackTimer.Tick += (_, _) => _ = RefreshGlobalTrackHeaderAsync();
+        }
+        if (!_globalTrackTimer.IsRunning) _globalTrackTimer.Start();
+        _ = RefreshGlobalTrackHeaderAsync();
+    }
+
+    protected override void OnDisappearing()
+    {
+        _globalTrackTimer?.Stop();
+        base.OnDisappearing();
+    }
+
+    private async Task RefreshGlobalTrackHeaderAsync()
+    {
+        if (_headerRefreshBusy) return;
+        _headerRefreshBusy = true;
+        try
+        {
+            var current = await _trackService.CurrentAsync();
+            if (current is null)
+            {
+                SystemStatusLabel.Text = "LOCAL SYSTEM / ONLINE NOT REQUIRED";
+                SystemStatusLabel.TextColor = Color.FromArgb("#8799A9");
+                return;
+            }
+            var session = current.Session;
+            var elapsed = _trackService.CreditedAt(session, DateTimeOffset.UtcNow);
+            var state = session.State == TrackSessionState.Paused ? "PAUZA" : "TRACKING";
+            var time = $"{(long)elapsed.TotalHours:D2}:{elapsed.Minutes:D2}:{elapsed.Seconds:D2}";
+            SystemStatusLabel.Text = $"{state} · {session.MissionTitle} · {time}";
+            SystemStatusLabel.TextColor = Color.FromArgb("#78D8B0");
+            SystemStatusLabel.LineBreakMode = LineBreakMode.TailTruncation;
+            SystemStatusLabel.MaxLines = 1;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Global TRACK header: {ex}");
+        }
+        finally { _headerRefreshBusy = false; }
     }
 
     private void OnTabTapped(object? sender, TappedEventArgs args)
@@ -142,7 +195,7 @@ public partial class MainPage : ContentPage
         finally { _trackSwitchGate.Release(); }
     }
 
-    private async Task<bool> QuickCreateAndTrackAsync(string title, Guid? groupId)
+    private async Task<bool> QuickCreateAndTrackAsync(MissionDraft draft)
     {
         await _trackSwitchGate.WaitAsync();
         try
@@ -150,19 +203,33 @@ public partial class MainPage : ContentPage
             // Ask BEFORE creating the task, to avoid an orphan if switching is cancelled.
             if (!await ConfirmSwitchAsync(null)) return false;
             var groups = await _groupRepository.ListAsync();
-            var group = groups.FirstOrDefault(g => g.Id == groupId);
-            if (groupId is not null && (group is null || group.IsArchived))
+            if (draft.GroupId is { } groupId &&
+                !groups.Any(g => g.Id == groupId && !g.IsArchived))
                 throw new InvalidOperationException("Ta grupa nie jest dostępna.");
-            var draft = new MissionDraft(title, null, MissionTimingMode.Urgent, null,
-                null, null, null, null, TimeZoneInfo.Local.Id, group?.Name,
-                MissionPriority.Normal, group?.Id);
             var mission = await _missionRepository.CreateAsync(draft);
             var running = await _trackService.CurrentAsync();
             if (running is not null) await _trackService.StopAsync();
-            await _trackService.StartAsync(mission.Id, group?.Id, mission.Title);
+            await _trackService.StartAsync(mission.Id, mission.GroupId, mission.Title);
             return true;
         }
         finally { _trackSwitchGate.Release(); }
+    }
+
+    private async Task OpenHistoryMissionAsync(Guid missionId)
+    {
+        var mission = (await _missionRepository.ListAsync()).FirstOrDefault(m => m.Id == missionId);
+        if (mission is null)
+        {
+            await DisplayAlertAsync("HISTORIA TRACK", "Ta misja nie istnieje juÅ¼ w katalogu. Historia czasu pozostaje zapisana.", "OK");
+            return;
+        }
+        var action = await DisplayActionSheetAsync(mission.Title, "ANULUJ", null,
+            "EDYTUJ MISJÄ˜", "ROZPOCZNIJ / WRÃ“Ä† DO TRACK");
+        if (action == "EDYTUJ MISJÄ˜")
+            await _cardCommands.ExecuteAsync(mission, MissionCardCommand.Edit,
+                async () => { if (_trackView is not null) await _trackView.RefreshAfterHistoryActionAsync(); });
+        else if (action == "ROZPOCZNIJ / WRÃ“Ä† DO TRACK")
+            await StartTrackingMissionAsync(mission);
     }
 
     private void NavigateTo(AppRoute route)
@@ -190,7 +257,7 @@ public partial class MainPage : ContentPage
             AppRoute.Missions => _missionsView ??= new MissionsView(
                 _missionRepository, _groupRepository, _trackService, _cardCommands),
             AppRoute.Track => _trackView ??= new TrackView(
-                _trackService, _groupRepository, QuickCreateAndTrackAsync),
+                _trackService, _groupRepository, QuickCreateAndTrackAsync, OpenHistoryMissionAsync),
             AppRoute.CampusLightOS => new PlaceholderView("CAMPUS LIGHTOS", "Campus LightOS"),
             AppRoute.BioOS => new PlaceholderView("BIO OS", "BioOS"),
             AppRoute.Analytics => new PlaceholderView("ANALITYKA", "AnalyticsOS"),

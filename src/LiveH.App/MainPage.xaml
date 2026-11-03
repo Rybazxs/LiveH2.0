@@ -12,10 +12,10 @@
                 <VerticalStackLayout Spacing="2">
                     <Label Text="LiveH OS" FontSize="19" FontAttributes="Bold"
                            TextColor="{StaticResource OsCyan}" />
-                    <Label Text="LOCAL SYSTEM / ONLINE NOT REQUIRED" FontSize="9"
+                    <Label x:Name="SystemStatusLabel" Text="LOCAL SYSTEM / ONLINE NOT REQUIRED" FontSize="9"
                            CharacterSpacing="1" TextColor="{StaticResource OsMuted}" />
                 </VerticalStackLayout>
-                <Label Grid.Column="1" Text="Version 0.0.1" FontSize="11"
+                <Label x:Name="VersionLabel" Grid.Column="1" Text="Version 0.19.0" FontSize="11"
                        VerticalOptions="Center" TextColor="{StaticResource OsMuted}" />
             </Grid>
             <BoxView Grid.Row="1" Color="{StaticResource OsBorder}" Margin="22,0,22,0" />

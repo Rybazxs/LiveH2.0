@@ -65,6 +65,28 @@ public partial class TodayView : ContentView
             RemainingLabel.Text = readModel.Missions.Remaining.ToString(Polish);
             UpdateOverdue(readModel.Missions.Overdue);
             UpdateTodo(readModel.Todo, readModel.Upcoming);
+            var live = await _tracking.CurrentAsync();
+            if (!IsLoaded) return;
+            if (live is { } status)
+            {
+                var session = status.Session;
+                var credited = _tracking.CreditedAt(session, DateTimeOffset.UtcNow);
+                var state = session.State == TrackSessionState.Paused ? "â…¡ PAUZA" : "â— TRWA POMIAR";
+                var time = $"{(long)credited.TotalHours:D2}:{credited.Minutes:D2}:{credited.Seconds:D2}";
+                var highlight = new VerticalStackLayout { Spacing = 5 };
+                highlight.Children.Add(new Label { Text = state + " Â· " + time,
+                    FontSize = 11, FontAttributes = FontAttributes.Bold,
+                    TextColor = Color.FromArgb("#78D8B0") });
+                highlight.Children.Add(new Label { Text = session.MissionTitle,
+                    FontSize = 15, FontAttributes = FontAttributes.Bold,
+                    TextColor = Color.FromArgb("#EEF4FA") });
+                var panel = new Border { Padding = new Thickness(12, 10),
+                    BackgroundColor = Color.FromArgb("#0C2825"),
+                    Stroke = Color.FromArgb("#49BD8E"), StrokeThickness = 1,
+                    Content = highlight };
+                TodoItems.Children.Insert(0, panel);
+                TodoHeading.Text = "AKTYWNA MISJA Â· " + TodoHeading.Text;
+            }
             UpdateRescheduled(readModel.RescheduledReminders);
             MissionStatusLabel.Text = readModel.Missions.Total == 0
                 ? "Brak misji na dzisiaj."

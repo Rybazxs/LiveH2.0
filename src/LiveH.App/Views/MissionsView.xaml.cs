@@ -91,11 +91,17 @@ public partial class MissionsView : ContentView
         await LoadMissionsAsync();
     }
 
+    private void OnToggleMyMissions(object? sender, TappedEventArgs args)
+    {
+        MissionItems.IsVisible = !MissionItems.IsVisible;
+        MissionsSectionTitle.Text = MissionItems.IsVisible ? "TWOJE MISJE  ▾" : "TWOJE MISJE  ▸";
+    }
+
     private async void OnToggleGroups(object? sender, EventArgs args)
     {
         GroupsHost.IsVisible = !GroupsHost.IsVisible;
-        GroupsButton.Text = GroupsHost.IsVisible ? "ZAMKNIJ" : "▣ GRUPY";
-        CalendarHost.IsVisible = !GroupsHost.IsVisible;
+        GroupsButton.Text = GroupsHost.IsVisible ? "▾ TWOJE GRUPY" : "▸ TWOJE GRUPY";
+        CalendarHost.IsVisible = true;
         if (!GroupsHost.IsVisible)
         {
             await LoadMissionsAsync();
@@ -124,7 +130,7 @@ public partial class MissionsView : ContentView
         _preferredGroupId = groupId;
         SetGroupPicker(groupId);
         GroupsHost.IsVisible = false;
-        GroupsButton.Text = "▣ GRUPY";
+        GroupsButton.Text = "▸ TWOJE GRUPY";
         CalendarHost.IsVisible = true;
         FormPanel.IsVisible = true;
         AddButton.Text = "ZAMKNIJ";
@@ -213,7 +219,7 @@ public partial class MissionsView : ContentView
         if (FormPanel.IsVisible)
         {
             GroupsHost.IsVisible = false;
-            GroupsButton.Text = "▣ GRUPY";
+            GroupsButton.Text = "▸ TWOJE GRUPY";
             CalendarHost.IsVisible = true;
         }
         HideError();

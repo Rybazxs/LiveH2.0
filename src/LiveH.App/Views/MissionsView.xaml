@@ -12,7 +12,7 @@
                     <Label Text="MISSION OS // LOCAL" FontSize="10" CharacterSpacing="1"
                            TextColor="{StaticResource OsMuted}" />
                 </VerticalStackLayout>
-                <Button Grid.Column="1" x:Name="GroupsButton" Text="▣ GRUPY"
+                <Button Grid.Column="1" x:Name="GroupsButton" Text="▸ TWOJE GRUPY"
                         Clicked="OnToggleGroups" HeightRequest="41" FontSize="11"
                         BackgroundColor="{StaticResource OsPanelAlt}"
                         TextColor="{StaticResource OsCyan}" />
@@ -111,18 +111,19 @@
                 </VerticalStackLayout>
             </Border>
 
-            <Border Padding="14,12" Stroke="{StaticResource OsBorder}" StrokeThickness="1"
+            <Border Padding="10,7" Stroke="{StaticResource OsBorder}" StrokeThickness="1"
                     StrokeShape="Rectangle" BackgroundColor="{StaticResource OsPanel}">
                 <VerticalStackLayout Spacing="9">
-                    <Grid ColumnDefinitions="*,Auto">
-                        <Label Text="TWOJE MISJE" FontSize="14" FontAttributes="Bold"
+                    <Grid ColumnDefinitions="*,Auto" MinimumHeightRequest="32">
+                        <Grid.GestureRecognizers><TapGestureRecognizer Tapped="OnToggleMyMissions" /></Grid.GestureRecognizers>
+                        <Label x:Name="MissionsSectionTitle" Text="TWOJE MISJE  ▸" FontSize="14" FontAttributes="Bold"
                                TextColor="{StaticResource OsCyan}" />
                         <Label x:Name="CountLabel" Grid.Column="1" Text="0"
                                FontSize="13" TextColor="{StaticResource OsText}" />
                     </Grid>
                     <Label x:Name="LoadError" IsVisible="False" FontSize="12"
                            TextColor="{StaticResource OsRose}" />
-                    <VerticalStackLayout x:Name="MissionItems" Spacing="8" />
+                    <VerticalStackLayout x:Name="MissionItems" Spacing="8" IsVisible="False" />
                 </VerticalStackLayout>
             </Border>
 
