@@ -19,7 +19,8 @@ public sealed record MissionDraft(
     string? CategoryId,
     string TimeZoneId,
     string? GroupName = null,
-    MissionPriority Priority = MissionPriority.Normal);
+    MissionPriority Priority = MissionPriority.Normal,
+    Guid? GroupId = null);
 
 public sealed record MissionRecord(
     Guid Id,
@@ -37,7 +38,8 @@ public sealed record MissionRecord(
     DateTimeOffset? CompletedAtUtc,
     string? GroupName = null,
     IReadOnlyList<MissionScheduleChange>? ScheduleHistory = null,
-    MissionPriority Priority = MissionPriority.Normal);
+    MissionPriority Priority = MissionPriority.Normal,
+    Guid? GroupId = null);
 
 // Stored locally with each mission; future analytics can inspect rescheduling events.
 public sealed record MissionScheduleChange(

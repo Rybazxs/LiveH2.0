@@ -8,11 +8,11 @@ public sealed record MissionSummary(int Total, int Completed, int Overdue)
 public sealed record BioNotice(string Id, string Title, string Message);
 // View-only information. No mission entities or storage types leak to the dashboard.
 public sealed record TodayTodoItem(string Title, string ScheduleLabel,
-    bool WasRescheduled = false);
+    bool WasRescheduled = false, string? MissionId = null);
 
 public sealed record TodayReminder(string Title, string ScheduleLabel,
     string PriorityLabel, int RescheduleCount,
-    DateTimeOffset LastRescheduledAtUtc, bool IsHighPriority);
+    DateTimeOffset LastRescheduledAtUtc, bool IsHighPriority, string? MissionId = null);
 
 // Immutable projection for the Today UI. No health or mission business logic here.
 public sealed record TodayReadModel(

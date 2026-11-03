@@ -9,5 +9,7 @@
     <ProjectReference Include="..\..\src\LiveH.Core\LiveH.Core.csproj" />
     <ProjectReference Include="..\..\src\LiveH.Modules.Today\LiveH.Modules.Today.csproj" />
     <ProjectReference Include="..\..\src\LiveH.Modules.Missions\LiveH.Modules.Missions.csproj" />
+    <ProjectReference Include="..\..\src\LiveH.Modules.Groups\LiveH.Modules.Groups.csproj" />
+    <ProjectReference Include="..\..\src\LiveH.Modules.Track\LiveH.Modules.Track.csproj" />
   </ItemGroup>
 </Project>

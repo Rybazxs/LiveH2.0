@@ -17,10 +17,10 @@ public sealed class MissionTodayReadModelSource : ITodayReadModelSource
             new MissionSummary(day.Total, day.Completed, day.Overdue),
             Array.Empty<BioNotice>(),
             day.ToDo.Select(x => new TodayTodoItem(x.Title, x.ScheduleLabel,
-                x.WasRescheduled)).ToArray(),
+                x.WasRescheduled, x.Id)).ToArray(),
             day.OverdueTitles,
             day.Upcoming?.Select(x => new TodayTodoItem(x.Title, x.ScheduleLabel,
-                x.WasRescheduled)).ToArray(),
+                x.WasRescheduled, x.Id)).ToArray(),
             day.RescheduledReminders?.Select(x => new TodayReminder(
                 x.Title, x.ScheduleLabel,
                 x.Priority switch
@@ -31,6 +31,6 @@ public sealed class MissionTodayReadModelSource : ITodayReadModelSource
                     _ => "NORMALNA"
                 },
                 x.RescheduleCount, x.LastRescheduledAtUtc,
-                x.Priority is MissionPriority.High or MissionPriority.Critical)).ToArray());
+                x.Priority is MissionPriority.High or MissionPriority.Critical, x.Id)).ToArray());
     }
 }

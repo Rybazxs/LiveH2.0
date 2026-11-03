@@ -5,18 +5,28 @@
              BackgroundColor="{StaticResource OsBlack}">
     <ScrollView>
         <VerticalStackLayout Padding="22,11,22,25" Spacing="13">
-            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
                 <VerticalStackLayout Spacing="3">
                     <Label Text="MISJE" FontSize="27" FontAttributes="Bold"
                            TextColor="{StaticResource OsCyan}" />
                     <Label Text="MISSION OS // LOCAL" FontSize="10" CharacterSpacing="1"
                            TextColor="{StaticResource OsMuted}" />
                 </VerticalStackLayout>
-                <Button Grid.Column="1" x:Name="AddButton" Text="+ DODAJ MISJĘ"
+                <Button Grid.Column="1" x:Name="GroupsButton" Text="▣ GRUPY"
+                        Clicked="OnToggleGroups" HeightRequest="41" FontSize="11"
+                        BackgroundColor="{StaticResource OsPanelAlt}"
+                        TextColor="{StaticResource OsCyan}" />
+                <Button Grid.Column="2" x:Name="AddButton" Text="+ MISJA"
                         Clicked="OnToggleForm" HeightRequest="41" FontSize="11"
                         BackgroundColor="{StaticResource OsPanelAlt}"
                         TextColor="{StaticResource OsCyan}" />
             </Grid>
+
+            <!-- Compact time selector. MissionCalendarView owns only transient UI filters. -->
+            <ContentView x:Name="CalendarHost" />
+
+            <!-- Own GroupsOS workspace: presentation joins independent group/mission contracts. -->
+            <ContentView x:Name="GroupsHost" IsVisible="False" />
 
             <Border x:Name="FormPanel" IsVisible="False" Padding="14,13"
                     Stroke="{StaticResource OsCyan}" StrokeThickness="1"
@@ -82,10 +92,10 @@
                            PlaceholderColor="{StaticResource OsMuted}" />
                     <Label Text="GRUPA (OPCJONALNIE)" FontSize="10"
                            TextColor="{StaticResource OsMuted}" />
-                    <Entry x:Name="GroupEntry" Placeholder="np. Studia (można zostawić puste)"
-                           MaxLength="80" FontSize="13" TextColor="{StaticResource OsText}"
-                           PlaceholderColor="{StaticResource OsMuted}" />
-                    <Label Text="Grupa to na razie własna etykieta. Kategorie i TrackOS później."
+                    <Picker x:Name="GroupPicker" Title="Wybierz grupę"
+                            TextColor="{StaticResource OsText}"
+                            TitleColor="{StaticResource OsMuted}" />
+                    <Label Text="Grupy i podgrupy utworzysz przez przycisk GRUPY."
                            FontSize="11" TextColor="{StaticResource OsMuted}" />
                     <Label x:Name="FormError" IsVisible="False" FontSize="12"
                            TextColor="{StaticResource OsRose}" />

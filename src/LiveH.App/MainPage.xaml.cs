@@ -1,6 +1,8 @@
 using LiveH.App.Views;
 using LiveH.Contracts.Navigation;
 using LiveH.Contracts.Missions;
+using LiveH.Contracts.Groups;
+using LiveH.Contracts.Track;
 using LiveH.Contracts.Today;
 using LiveH.Core.Navigation;
 
@@ -11,6 +13,19 @@ public partial class MainPage : ContentPage
     private readonly NavigationCoordinator _navigation;
     private readonly ITodayReadModelSource _todaySource;
     private readonly IMissionRepository _missionRepository;
+    private readonly IGroupRepository _groupRepository;
+    private readonly ITrackService _trackService;
+    private readonly MissionCardCommands _cardCommands;
+    // Serialize navigation-triggered starts so two rapid PLAY taps cannot race.
+    private readonly SemaphoreSlim _trackSwitchGate = new(1, 1);
+    // Keep the heaviest tab's native controls, selected date and scroll state.
+    // Other tabs continue to use their existing lifecycle/refresh semantics.
+    private MissionsView? _missionsView;
+    private TodayView? _todayView;
+    private TrackView? _trackView;
+    private bool _missionsShownBefore;
+    private bool _todayGestureAttached;
+    private bool _trackGestureAttached;
 
     private readonly Color _activeBackground = Color.FromArgb("#0D2633");
     private readonly Color _inactiveBackground = Color.FromArgb("#081019");
@@ -18,12 +33,16 @@ public partial class MainPage : ContentPage
     private readonly Color _inactiveText = Color.FromArgb("#8799A9");
 
     public MainPage(NavigationCoordinator navigation, ITodayReadModelSource todaySource,
-        IMissionRepository missionRepository)
+        IMissionRepository missionRepository, IGroupRepository groupRepository, ITrackService trackService)
     {
         InitializeComponent();
         _navigation = navigation;
         _todaySource = todaySource;
         _missionRepository = missionRepository;
+        _groupRepository = groupRepository;
+        _trackService = trackService;
+        _cardCommands = new MissionCardCommands(this, _missionRepository,
+            _groupRepository, StartTrackingMissionAsync);
         RenderCurrentRoute();
     }
 
@@ -67,12 +86,20 @@ public partial class MainPage : ContentPage
 
     private void AttachHorizontalNavigation(View moduleView)
     {
+        // Scrolling takes precedence in Missions. Its large ScrollView must
+        // not compete with a horizontal navigation recognizer on Android.
+        // Bottom tabs remain the reliable navigation method on this screen.
+        if (moduleView is MissionsView) return;
+
         // The shell owns navigation; feature views do not import the coordinator.
         // Attach to the scrolling surface instead of its parent Grid, because
         // a ScrollView can consume touch input before it reaches that Grid.
-        var surface = moduleView is ContentView { Content: ScrollView scroll }
-            ? (View)scroll
-            : moduleView;
+        var surface = moduleView switch
+        {
+            TrackView track => (View)track.SwipeSurface,
+            ContentView { Content: ScrollView scroll } => scroll,
+            _ => moduleView
+        };
 
         var gesture = new SwipeGestureRecognizer
         {
@@ -83,8 +110,72 @@ public partial class MainPage : ContentPage
         surface.GestureRecognizers.Add(gesture);
     }
 
+    public void OpenTrack() => NavigateTo(AppRoute.Track);
+
+    private async Task<bool> ConfirmSwitchAsync(Guid? nextMissionId)
+    {
+        var current = await _trackService.CurrentAsync();
+        if (current is null || current.Session.MissionId == nextMissionId) return true;
+        return await DisplayAlertAsync("TRACK OS // PRZEŁĄCZ MISJĘ?",
+            $"Obecnie mierzysz: {current.Session.MissionTitle}.\n" +
+            "Zakończyć i zapisać jej czas, a następnie rozpocząć nową sesję?",
+            "PRZEŁĄCZ", "ANULUJ");
+    }
+
+    private async Task StartTrackingMissionAsync(MissionRecord mission)
+    {
+        await _trackSwitchGate.WaitAsync();
+        try
+        {
+            var current = await _trackService.CurrentAsync();
+            if (current is not null && current.Session.MissionId == mission.Id)
+            {
+                OpenTrack(); // Existing session: never create a second one.
+                return;
+            }
+            if (!await ConfirmSwitchAsync(mission.Id)) return;
+            if (current is not null) await _trackService.StopAsync();
+            await _trackService.StartAsync(mission.Id, mission.GroupId, mission.Title);
+            OpenTrack();
+        }
+        catch (Exception ex) { await DisplayAlertAsync("TRACK OS", ex.Message, "OK"); }
+        finally { _trackSwitchGate.Release(); }
+    }
+
+    private async Task<bool> QuickCreateAndTrackAsync(string title, Guid? groupId)
+    {
+        await _trackSwitchGate.WaitAsync();
+        try
+        {
+            // Ask BEFORE creating the task, to avoid an orphan if switching is cancelled.
+            if (!await ConfirmSwitchAsync(null)) return false;
+            var groups = await _groupRepository.ListAsync();
+            var group = groups.FirstOrDefault(g => g.Id == groupId);
+            if (groupId is not null && (group is null || group.IsArchived))
+                throw new InvalidOperationException("Ta grupa nie jest dostępna.");
+            var draft = new MissionDraft(title, null, MissionTimingMode.Urgent, null,
+                null, null, null, null, TimeZoneInfo.Local.Id, group?.Name,
+                MissionPriority.Normal, group?.Id);
+            var mission = await _missionRepository.CreateAsync(draft);
+            var running = await _trackService.CurrentAsync();
+            if (running is not null) await _trackService.StopAsync();
+            await _trackService.StartAsync(mission.Id, group?.Id, mission.Title);
+            return true;
+        }
+        finally { _trackSwitchGate.Release(); }
+    }
+
     private void NavigateTo(AppRoute route)
     {
+        // Reopening the same tab must not discard the existing native view tree.
+        // This avoids needless Android button creation and prevents stale controls
+        // from racing against detached pages during async navigation.
+        if (_navigation.Current == route)
+        {
+            MorePanel.IsVisible = false;
+            SetActiveTabColors();
+            return;
+        }
         _navigation.NavigateTo(route);
         MorePanel.IsVisible = false;
         RenderCurrentRoute();
@@ -94,17 +185,55 @@ public partial class MainPage : ContentPage
     {
         View moduleView = _navigation.Current switch
         {
-            AppRoute.Today => new TodayView(_todaySource),
-            AppRoute.Missions => new MissionsView(_missionRepository),
-            AppRoute.Track => new PlaceholderView("TRACK", "TrackOS"),
+            AppRoute.Today => _todayView ??= new TodayView(
+                _todaySource, _missionRepository, _groupRepository, _trackService, _cardCommands),
+            AppRoute.Missions => _missionsView ??= new MissionsView(
+                _missionRepository, _groupRepository, _trackService, _cardCommands),
+            AppRoute.Track => _trackView ??= new TrackView(
+                _trackService, _groupRepository, QuickCreateAndTrackAsync),
             AppRoute.CampusLightOS => new PlaceholderView("CAMPUS LIGHTOS", "Campus LightOS"),
             AppRoute.BioOS => new PlaceholderView("BIO OS", "BioOS"),
             AppRoute.Analytics => new PlaceholderView("ANALITYKA", "AnalyticsOS"),
             AppRoute.Settings => new PlaceholderView("USTAWIENIA", "System settings"),
-            _ => new TodayView(_todaySource)
+            _ => new TodayView(_todaySource, _missionRepository, _groupRepository, _trackService, _cardCommands)
         };
-        AttachHorizontalNavigation(moduleView);
-        ModuleHost.Content = moduleView;
+        // Attach gestures only on newly constructed screens. Reusing the
+        // Missions tab avoids rebuilding its 42 calendar cells at every switch.
+        if (moduleView is MissionsView missions)
+        {
+            var needsRefresh = _missionsShownBefore;
+            _missionsShownBefore = true;
+            ModuleHost.Content = missions;
+            if (needsRefresh) _ = missions.RefreshAfterNavigationAsync();
+        }
+        else if (moduleView is TodayView today)
+        {
+            // Today is read-only. Reuse its controls, but refresh its read model
+            // after navigation so external MissionOS changes remain visible.
+            if (!_todayGestureAttached)
+            {
+                AttachHorizontalNavigation(today);
+                _todayGestureAttached = true;
+            }
+            // TodayView.Loaded handles a fresh read after reattachment.
+            ModuleHost.Content = today;
+        }
+        else if (moduleView is TrackView track)
+        {
+            // TrackOS Loaded/Unloaded starts/stops its existing timer. Recreating
+            // the page on every switch churned Android handlers and gesture views.
+            if (!_trackGestureAttached)
+            {
+                AttachHorizontalNavigation(track);
+                _trackGestureAttached = true;
+            }
+            ModuleHost.Content = track;
+        }
+        else
+        {
+            AttachHorizontalNavigation(moduleView);
+            ModuleHost.Content = moduleView;
+        }
         SetActiveTabColors();
     }
 

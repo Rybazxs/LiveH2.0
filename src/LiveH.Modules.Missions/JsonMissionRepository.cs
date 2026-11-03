@@ -41,7 +41,7 @@ public sealed class JsonMissionRepository : IMissionRepository
             draft.Day, draft.StartsAtLocal, draft.EndsAtLocal, draft.EstimatedMinutes,
             draft.CategoryId, draft.TimeZoneId, MissionStatus.Open,
             DateTimeOffset.UtcNow, null, draft.GroupName?.Trim(),
-            Priority: draft.Priority);
+            Priority: draft.Priority, GroupId: draft.GroupId);
 
         await _mutex.WaitAsync(ct);
         try
@@ -50,6 +50,35 @@ public sealed class JsonMissionRepository : IMissionRepository
             store.Missions.Add(mission);
             await SaveAsync(store, ct);
             return mission;
+        }
+        finally { _mutex.Release(); }
+    }
+
+    public async Task<MissionRecord> UpdateAsync(Guid missionId, MissionDraft draft,
+        CancellationToken ct = default)
+    {
+        MissionRules.Validate(draft);
+        await _mutex.WaitAsync(ct);
+        try
+        {
+            var store = await ReadAsync(ct);
+            var index = store.Missions.FindIndex(x => x.Id == missionId);
+            if (index < 0) throw new KeyNotFoundException("Nie znaleziono misji.");
+            var original = store.Missions[index];
+            var updated = original with
+            {
+                Title = draft.Title.Trim(), Notes = draft.Notes?.Trim(),
+                TimingMode = draft.TimingMode, Day = draft.Day,
+                StartsAtLocal = draft.StartsAtLocal, EndsAtLocal = draft.EndsAtLocal,
+                EstimatedMinutes = draft.EstimatedMinutes,
+                CategoryId = draft.CategoryId, TimeZoneId = draft.TimeZoneId,
+                Priority = draft.Priority,
+                GroupId = draft.GroupId, GroupName = draft.GroupName?.Trim()
+            };
+            // Important: ID, CreatedAt, Status, CompletedAt and ScheduleHistory are untouched.
+            store.Missions[index] = updated;
+            await SaveAsync(store, ct);
+            return updated;
         }
         finally { _mutex.Release(); }
     }
@@ -85,6 +114,28 @@ public sealed class JsonMissionRepository : IMissionRepository
             var changed = MissionRules.Reschedule(store.Missions[index], newDay,
                 DateTime.Now, DateTimeOffset.UtcNow);
             store.Missions[index] = changed;
+            await SaveAsync(store, ct);
+        }
+        finally { _mutex.Release(); }
+    }
+
+    public async Task AssignGroupAsync(Guid missionId, Guid? groupId,
+        string? groupName, CancellationToken ct = default)
+    {
+        if (groupId is null && groupName is not null)
+            throw new ArgumentException("Nie można przypisać nazwy bez identyfikatora grupy.");
+        if (groupName?.Length > 80)
+            throw new ArgumentException("Nazwa grupy jest za długa.");
+        await _mutex.WaitAsync(ct);
+        try
+        {
+            var store = await ReadAsync(ct);
+            var index = store.Missions.FindIndex(m => m.Id == missionId);
+            if (index < 0) throw new KeyNotFoundException("Nie znaleziono misji.");
+            store.Missions[index] = store.Missions[index] with
+            {
+                GroupId = groupId, GroupName = groupName
+            };
             await SaveAsync(store, ct);
         }
         finally { _mutex.Release(); }
